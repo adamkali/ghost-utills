@@ -39,7 +39,7 @@ type GhostConfig struct {
 // Returns:
 //  GhostConfig struct
 //  error
-func New() (GhostConfig, error) {
+func Load() (GhostConfig, error) {
     // load ghost config from the root of the project
 	ghostConfig := GhostConfig{}
     ghostConfigFile, err := ioutil.ReadFile("./ghost.yaml")
@@ -54,134 +54,6 @@ func New() (GhostConfig, error) {
 	return ghostConfig, nil
 }
 
-// NewFromPath returns a new GhostConfig struct
-// used to load the ghost.yaml file into a ghost project
-// from a specified path instead of the root of the project.
-// This is particularly useful when you want to load a ghost.testing.yaml
-// file for testing purposes, or something similar.
-//
-// Example: 
-//  ghostConfig, err := ghostutils.NewFromPath("./ghost.testing.yaml")
-//  if err != nil {
-//      log.Fatal(err)
-//  }
-//  fmt.Println(ghostConfig.Name)
-//
-// Returns:
-//  GhostConfig struct
-//  error
-func NewFromPath(path string) (GhostConfig, error) {
-    // load ghost config from the root of the project
-    ghostConfig := GhostConfig{}
-    ghostConfigFile, err := ioutil.ReadFile(path)
-    if err != nil {
-        return ghostConfig, err
-    }
-    err = yaml.Unmarshal(ghostConfigFile, &ghostConfig)
-    if err != nil {
-        return ghostConfig, err
-    }
-    return ghostConfig, nil
-}
-
-type GhostRoute interface {
-    New(path string, db *surrealdb.DB) GhostRoute
-    Route(rg *gin.RouterGroup)
-    DB() *surrealdb.DB
-    RG() *gin.RouterGroup
-}
-
-type BasicRoute struct {
-    db *surrealdb.DB
-    RouteGroup *gin.RouterGroup
-    Path string
-}
-
-// New returns a new BasicRoute struct
-// used to create a new route for a ghost project 
-// using the surrealdb database. 
-// 
-// Arguments:
-//  path: string
-//  db: *surrealdb.DB 
-//
-// Example: 
-//  basicRoute := BasicRoute{} 
-//  db, err := ghostConfig.Setup(r)
-//  if err != nil {
-//      log.Fatal(err)
-//  }
-//  basicRoute.New("/basic", db)
-//
-// Returns:
-//  BasicRoute struct
-func (basicRoute BasicRoute) New(path string, db *surrealdb.DB) GhostRoute {
-    return BasicRoute{
-        db: db,
-        Path: path,
-        RouteGroup: nil,
-    }
-}
-
-// DB returns the surrealdb database 
-// used to create the route. 
-// 
-// Example: 
-//  basicRoute := BasicRoute{} 
-//  db, err := ghostConfig.Setup(r) 
-//  if err != nil { 
-//      log.Fatal(err) 
-//  } 
-//  basicRoute.New("/basic", db) 
-//  _ = basicRoute.DB()) 
-//
-// Returns:
-//  *surrealdb.DB
-func (basicRoute BasicRoute) DB() *surrealdb.DB {
-    return basicRoute.db
-}
-
-// Route is used to create a new route for a ghost project 
-// using the surrealdb database. 
-// 
-// Arguments: 
-//  rg: *gin.RouterGroup 
-// 
-// Example: 
-//  api := BasicRoute{} 
-//  db, err := ghostConfig.Setup(r) 
-//  if err != nil { 
-//      log.Fatal(err) 
-//  } 
-//  api.New("/api", db)
-//  // setup routes for api using api.RG()
-// 
-func (basicRoute BasicRoute) Route(rg *gin.RouterGroup) {
-    basic := rg.Group(basicRoute.Path)
-    basicRoute.RouteGroup = basic
-}
-
-// RG returns the gin.RouterGroup used to create the route. 
-// used in other parts of the ghost to create routes. 
-// 
-// Example:
-//  basicRoute := BasicRoute{} 
-//  db, err := ghostConfig.Setup(r) 
-//  if err != nil { 
-//      log.Fatal(err) 
-//  } 
-//  basicRoute.New("/basic", db)
-//  basicRouteRoute := basicRoute.RG()
-//  basicRouteRoute.GET("/", func(c *gin.Context) {
-//      c.HTML(http.StatusOK, "index.html", gin.H{})
-//  })
-//  r.Run(fmt.Sprintf(":%d", ghostConfig.Port))
-// 
-// Returns:
-//  *gin.RouterGroup
-func (basicRoute BasicRoute) RG() *gin.RouterGroup {
-    return basicRoute.RouteGroup
-}
 
 // Setup is used to setup the ghost project
 // with the surrealdb database and gin router 
@@ -204,13 +76,11 @@ func (basicRoute BasicRoute) RG() *gin.RouterGroup {
 // Returns:
 //  *surrealdb.DB for creating Routes using a GhostRoute interface 
 //  error 
-func (ghostConfig GhostConfig) Setup(r *gin.Engine) (*surrealdb.DB, error) {
+func (ghostConfig GhostConfig) BasicSurrealSetup(r *gin.Engine) (*surrealdb.DB, error) {
     db, err := ghostConfig.surrealSetup()
     if err != nil {
         return db, err
     }
-    r.Static("/static", "./static")
-    r.LoadHTMLGlob("src/views/**/*")
     return db, nil
 }
 
