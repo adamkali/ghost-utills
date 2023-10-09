@@ -1,4 +1,4 @@
-module github.com/adamkali/ghost-utils
+module github.com/adamkali/ghost_utils
 
 go 1.18
 
