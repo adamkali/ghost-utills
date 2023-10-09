@@ -209,7 +209,7 @@ func (ghostConfig GhostConfig) Setup(r *gin.Engine) (*surrealdb.DB, error) {
     if err != nil {
         return db, err
     }
-    r.LoadHTMLGlob("src/views/**/*")
+    r.LoadHTMLGlob("./src/views/**/*")
     r.Static("/static", "./static")
     return db, nil
 }
